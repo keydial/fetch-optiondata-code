@@ -1,107 +1,28 @@
-name: Run Python Script
+name: Fetch Option Chain Data
 
-on: 
-  workflow_dispatch:
-
-env:
-  subscription_id: ${{ secrets.SUBSCRIPTION_ID }}
-  tenant_id: ${{ secrets.TENANT_ID }}
-  rg-videos-name: ${{ secrets.RESOURCE_GROUP_NAME }}
-  synapse_videos_workspace_name: ${{ secrets.SYNAPSE_WORKSPACE_NAME }}
-  sp-videos-client-id: ${{ secrets.SP_VIDEOS_CLIENT_ID }}
-  sp-videos-client-secret: ${{ secrets.SP_VIDEOS_CLIENT_SECRET }}
+on:
+  schedule:
+    - cron: '*/3 4-10 * * *'
 
 jobs:
-  run-python:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v2
       
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - name: Set up Python
+        uses: actions/setup-python@v2
         with:
-          python-version: '3.11'
+          python-version: '3.9' # replace with your Python version
+          
+      - name: Install dependencies
+        run: pip install mysql-connector-python pandas sqlalchemy requests pytz
       
-      - name: Run Python Script
-        run: |
-          python -m pip install requests
-          python mypythonscript.py
-
-  run-python-via-powershell:
-    needs: run-python
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-      - name: Run Python Script via Powershell
-        shell: pwsh
-        run: |
-          python -m pip install requests
-          python mypythonscriptPS.py
-
-  run-python-multiple-versions:
-    needs: [run-python, run-python-via-powershell]
-    runs-on: ${{ matrix.os }}
-    strategy:
-      max-parallel: 1
-      matrix:
-        os: [ubuntu-latest]
-        python-version: ['3.9', '3.10', '3.11']
-      fail-fast: false
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-      
-      - name: Setup Python Version ${{ matrix.python-version }}
-        uses: actions/setup-python@v4.3.0
-        id: setuppython
-        with:
-          python-version: ${{ matrix.python-version }}
-      
-      - uses: actions/cache@v3
-        id: cache
-        with:
-          path: ${{ env.pythonLocation }}
-          key: ${{ runner.os }}-python-${{ env.pythonLocation }}-${{ hashFiles('requirements.txt') }}-test1
-      
-      - name: Install Dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: pip install -r requirements.txt
-
-      - name: Run Python Script
-        run:  python mypythonscript.py
-
-  run-python-test2:
-    needs: [run-python, run-python-via-powershell]
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup Python Version ${{ matrix.python-version }}
-        uses: actions/setup-python@v4.3.0
-        with:
-          python-version: '3.10'
-      
-      - name: Cache Dependencies
-        uses: actions/cache@v3
-        id: cache2
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-      
-      - name: Install Dependencies
-        if: steps.cache2.outputs.cache-hit != 'true'
-        run: pip install -r requirements.txt 
-      
-
-
-
-
-
-
-      
+      - name: Run script
+        run: python mypythonscript.py
+        env:
+          DB_HOST: 89.117.188.204
+          DB_NAME: u448360173_niftyoption
+          DB_USER: u448360173_niftyoption
+          DB_PASS: eDOzfAc8Y1
